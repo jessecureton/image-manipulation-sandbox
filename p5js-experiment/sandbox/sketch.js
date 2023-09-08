@@ -3,8 +3,14 @@ let effectImg;  // The image instance that will be modified by effects
 let sel;        // The dropdown menu for effects
 
 function preload() {
-  img = loadImage('default.png');  // Load a default image
-  effectImg = img;
+  loadAndDuplicateImage('default.png');  // Load a default image
+}
+
+function loadAndDuplicateImage(path_or_data) {
+  img = loadImage(path_or_data, function() {
+    effectImg = createImage(img.width, img.height);
+    effectImg.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+  });
 }
 
 function setup() {
@@ -24,16 +30,14 @@ function setup() {
   sel = createSelect();
   sel.position(0, 30);
   sel.option('None');
-  sel.option('Effect 1');
+  sel.option('Test - Brighten Image');
   sel.option('Effect 2');
   sel.changed(applyEffect);
 }
 
 function handleFile(file) {
   if (file.type === 'image') {
-    img = loadImage(file.data, function() {
-      effectImg = img;
-    });
+    loadAndDuplicateImage(file.data);
   } else {
     img = null;
     effectImg = null;
@@ -47,8 +51,24 @@ function draw() {
   }
 }
 
+function applyBrightenImage() {
+  effectImg.loadPixels();
+  for (let i = 0; i < effectImg.pixels.length; i += 4) {
+    effectImg.pixels[i] += 50;
+    effectImg.pixels[i + 1] += 50;
+    effectImg.pixels[i + 2] += 50;
+  }
+  effectImg.updatePixels();
+}
+
 function applyEffect() {
-  // Placeholder for applying effects based on dropdown selection
+  // Any time the effect is changed, reset the effect image to the original image
+  effectImg.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+
+  if (sel.value() === 'Test - Brighten Image') {
+    applyBrightenImage()
+  } else if (sel.value() === 'Effect 2') {
+  }
 }
 
 function displayImagesSmartly() {
