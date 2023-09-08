@@ -1,6 +1,7 @@
 let img;        // The original image instance from the file input
 let effectImg;  // The image instance that will be modified by effects
-let sel;        // The dropdown menu for effects
+let effectSel;        // The dropdown menu for effects
+let formatSel;  // The dropdown menu for image format
 
 function preload() {
   loadAndDuplicateImage('default.png');  // Load a default image
@@ -15,7 +16,7 @@ function loadAndDuplicateImage(path_or_data) {
 
 function setup() {
   noCanvas();
-  let e = createCanvas(windowWidth, windowHeight);
+  let e = createCanvas(windowWidth, windowHeight, WEBGL);
   e.style('display', 'block');
   e.style('margin', '0');
   e.style('padding', '0');
@@ -27,12 +28,23 @@ function setup() {
   input.position(0, 0);
 
   // Create dropdown menu for effects
-  sel = createSelect();
-  sel.position(0, 30);
-  sel.option('None');
-  sel.option('Test - Brighten Image');
-  sel.option('Effect 2');
-  sel.changed(applyEffect);
+  effectSel = createSelect();
+  effectSel.position(0, 30);
+  effectSel.option('None');
+  effectSel.option('Test - Brighten Image');
+  effectSel.option('Effect 2');
+  effectSel.changed(applyEffect);
+
+  // Create a save button
+  saveButton = createButton('Save');
+  saveButton.position(0, 90);
+  saveButton.mousePressed(saveEditedImage);
+
+  // Create a dropdown menu for image format
+  formatSel = createSelect();
+  formatSel.position(0, 120);
+  formatSel.option('PNG');
+  formatSel.option('JPG');
 }
 
 function handleFile(file) {
@@ -65,9 +77,9 @@ function applyEffect() {
   // Any time the effect is changed, reset the effect image to the original image
   effectImg.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
 
-  if (sel.value() === 'Test - Brighten Image') {
+  if (effectSel.value() === 'Test - Brighten Image') {
     applyBrightenImage()
-  } else if (sel.value() === 'Effect 2') {
+  } else if (effectSel.value() === 'Effect 2') {
   }
 }
 
@@ -82,23 +94,24 @@ function displayImagesSmartly() {
   if (isWindowLandscape === isImgLandscape) {
     // Both are of the same orientation
     let paddedWidth = (windowWidth - padding) / 2;
-    displayImage(img, 0, paddedWidth, windowHeight, 'x');
-    displayImage(effectImg, paddedWidth + padding, paddedWidth, windowHeight, 'x');
+
+    displayImage(img, -paddedWidth / 2, paddedWidth, windowHeight, 'x');
+    displayImage(effectImg, paddedWidth / 2 + padding, paddedWidth, windowHeight, 'x');
+
   } else {
     // Different orientations
     let paddedHeight = (windowHeight - padding) / 2;
-    displayImage(img, 0, windowWidth, paddedHeight, 'y');
-    displayImage(effectImg, paddedHeight + padding, windowWidth, paddedHeight, 'y');
+
+    displayImage(img, -paddedHeight / 2, windowWidth, paddedHeight, 'y');
+    displayImage(effectImg, paddedHeight / 2 + padding, windowWidth, paddedHeight, 'y');
   }
 }
 
 function displayImage(_image, offset, maxWidth, maxHeight, axis) {
   let imgAspect = _image.width / _image.height;
-  let windowAspect = maxWidth / maxHeight;
-
   let newWidth, newHeight;
 
-  if (imgAspect > windowAspect) {
+  if (imgAspect > (maxWidth / maxHeight)) {
     newWidth = maxWidth;
     newHeight = maxWidth / imgAspect;
   } else {
@@ -106,8 +119,9 @@ function displayImage(_image, offset, maxWidth, maxHeight, axis) {
     newWidth = maxHeight * imgAspect;
   }
 
-  let xPos = (axis === 'x') ? offset : (maxWidth - newWidth) / 2;
-  let yPos = (axis === 'y') ? offset : (maxHeight - newHeight) / 2;
+  // Adjust for WebGL's center-origin coordinate system
+  let xPos = (axis === 'x') ? offset - windowWidth / 2 + newWidth / 2 : -windowWidth / 2 + (maxWidth - newWidth) / 2;
+  let yPos = (axis === 'y') ? offset - windowHeight / 2 + newHeight / 2 : -windowHeight / 2 + (maxHeight - newHeight) / 2;
 
   image(_image, xPos, yPos, newWidth, newHeight);
 }
@@ -116,3 +130,7 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
+function saveEditedImage() {
+  let format = formatSel.value().toLowerCase();
+  save(effectImg, `edited_image.${format}`);
+}
