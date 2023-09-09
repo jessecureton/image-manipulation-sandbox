@@ -1,10 +1,12 @@
-let img;        // The original image instance from the file input
-let effectImg;  // The image instance that will be modified by effects
-let effectSel;        // The dropdown menu for effects
-let formatSel;  // The dropdown menu for image format
+let img;          // The original image instance from the file input
+let effectImg;    // The image instance that will be modified by effects
+let effectSel;    // The dropdown menu for effects
+let formatSel;    // The dropdown menu for image format
+let invertShader; // The shader for the inversion filter
 
 function preload() {
-  loadAndDuplicateImage('default.png');  // Load a default image
+  loadAndDuplicateImage('default2.jpg');  // Load a default image
+  invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
 }
 
 function loadAndDuplicateImage(path_or_data) {
@@ -32,7 +34,7 @@ function setup() {
   effectSel.position(0, 30);
   effectSel.option('None');
   effectSel.option('Test - Brighten Image');
-  effectSel.option('Effect 2');
+  effectSel.option('Test - Invert Shader');
   effectSel.changed(applyEffect);
 
   // Create a save button
@@ -73,13 +75,33 @@ function applyBrightenImage() {
   effectImg.updatePixels();
 }
 
+function applyShaderTest() {
+  // max texture size is 8192 
+  console.log('applying shader test');
+  let gfx = createGraphics(img.width, img.height, WEBGL);
+  gfx.shader(invertShader);
+  invertShader.setUniform('tex0', img); // Setting the texture uniform
+  gfx.rect(0,0,img.width,img.height)
+  let captured = gfx.get();
+  effectImg = captured;
+
+  // This really shouldn't be necessary but without it a second call
+  // to applyShaderTest() will fail to executed the shader, and the console
+  // will print:
+  // WebGL warning: drawElementsInstanced: The current program is not linked.
+  invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
+}
+
 function applyEffect() {
   // Any time the effect is changed, reset the effect image to the original image
-  effectImg.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+  let _img = createImage(img.width, img.height);
+  _img.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+  effectImg = _img;
 
   if (effectSel.value() === 'Test - Brighten Image') {
     applyBrightenImage()
-  } else if (effectSel.value() === 'Effect 2') {
+  } else if (effectSel.value() === 'Test - Invert Shader') {
+    applyShaderTest();
   }
 }
 
