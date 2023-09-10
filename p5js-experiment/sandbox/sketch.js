@@ -3,10 +3,26 @@ let effectImg;    // The image instance that will be modified by effects
 let effectSel;    // The dropdown menu for effects
 let formatSel;    // The dropdown menu for image format
 let invertShader; // The shader for the inversion filter
+let greyscaleShader; // The shader for the greyscale filter
+
+function getEffects() {
+  return {
+    'None': null,
+    'Test - Brighten Image': applyBrightenImage,
+    'Test - Invert Shader': applyShaderTest,
+    'Test - Greyscale Shader': applyGreyscaleShader,
+    'Test - Stacked Shaders': applyStackedShaders,
+  }
+}
+
+function loadShaders() {
+  invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
+  greyscaleShader = loadShader('shaders/noop-vert.glsl', 'shaders/greyscale.glsl');
+}
 
 function preload() {
   loadAndDuplicateImage('default2.jpg');  // Load a default image
-  invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
+  loadShaders();
 }
 
 function loadAndDuplicateImage(path_or_data) {
@@ -32,9 +48,9 @@ function setup() {
   // Create dropdown menu for effects
   effectSel = createSelect();
   effectSel.position(0, 30);
-  effectSel.option('None');
-  effectSel.option('Test - Brighten Image');
-  effectSel.option('Test - Invert Shader');
+  for (let effectName in getEffects()) {
+    effectSel.option(effectName);
+  }
   effectSel.changed(applyEffect);
 
   // Create a save button
@@ -75,21 +91,39 @@ function applyBrightenImage() {
   effectImg.updatePixels();
 }
 
-function applyShaderTest() {
-  // max texture size is 8192 
-  console.log('applying shader test');
-  let gfx = createGraphics(img.width, img.height, WEBGL);
-  gfx.shader(invertShader);
-  invertShader.setUniform('tex0', img); // Setting the texture uniform
-  gfx.rect(0,0,img.width,img.height)
-  let captured = gfx.get();
-  effectImg = captured;
+function applyShaders(shaders) {
+  let currentImg = img; // Start with the original image
+  let gfx;
+  
+  for (let shader of shaders) {
+    // max texture size is 8192 - we should check for this
+    gfx = createGraphics(currentImg.width, currentImg.height, WEBGL);
+    gfx.shader(shader);
+    shader.setUniform('tex0', currentImg);
+    gfx.rect(0, 0, currentImg.width, currentImg.height);
+    
+    // Capture the output into a p5.Image
+    currentImg = gfx.get();
+  }
 
-  // This really shouldn't be necessary but without it a second call
-  // to applyShaderTest() will fail to executed the shader, and the console
-  // will print:
-  // WebGL warning: drawElementsInstanced: The current program is not linked.
-  invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
+  effectImg = currentImg; // Final output after all shaders
+
+  // This really shouldn't be necessary but without it a second call to apply
+  // a given shader will fail to execute the shader, and the console will print:
+  //    WebGL warning: drawElementsInstanced: The current program is not linked.
+  loadShaders();
+}
+
+function applyStackedShaders() {
+  applyShaders([invertShader, greyscaleShader]);
+}
+
+function applyShaderTest() {
+  applyShaders([invertShader]);
+}
+
+function applyGreyscaleShader() {
+  applyShaders([greyscaleShader]);
 }
 
 function applyEffect() {
@@ -98,10 +132,10 @@ function applyEffect() {
   _img.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
   effectImg = _img;
 
-  if (effectSel.value() === 'Test - Brighten Image') {
-    applyBrightenImage()
-  } else if (effectSel.value() === 'Test - Invert Shader') {
-    applyShaderTest();
+  // Apply the effect
+  effects = getEffects();
+  if (effectSel.value() in effects) {
+    effects[effectSel.value()]();
   }
 }
 
