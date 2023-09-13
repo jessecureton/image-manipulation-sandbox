@@ -2,12 +2,15 @@ let img;          // The original image instance from the file input
 let effectImg;    // The image instance that will be modified by effects
 let effectSel;    // The dropdown menu for effects
 let formatSel;    // The dropdown menu for image format
+
 let invertShader; // The shader for the inversion filter
 let greyscaleShader; // The shader for the greyscale filter
+let pixelSortShader;   // The shader for the ChatGPT filter
 
 function getEffects() {
   return {
     'None': null,
+    '1 - Pixel Sort': applyPixelSort,
     'Test - Brighten Image': applyBrightenImage,
     'Test - Invert Shader': applyShaderTest,
     'Test - Greyscale Shader': applyGreyscaleShader,
@@ -18,6 +21,7 @@ function getEffects() {
 function loadShaders() {
   invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
   greyscaleShader = loadShader('shaders/noop-vert.glsl', 'shaders/greyscale.glsl');
+  pixelSortShader = loadShader('shaders/noop-vert.glsl', 'shaders/pixel-sort.glsl');
 }
 
 function preload() {
@@ -124,6 +128,10 @@ function applyShaderTest() {
 
 function applyGreyscaleShader() {
   applyShaders([greyscaleShader]);
+}
+
+function applyPixelSort() {
+  applyShaders([pixelSortShader]);
 }
 
 function applyEffect() {
