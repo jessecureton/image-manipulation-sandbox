@@ -6,11 +6,15 @@ let formatSel;    // The dropdown menu for image format
 let invertShader; // The shader for the inversion filter
 let greyscaleShader; // The shader for the greyscale filter
 let pixelSortShader;   // The shader for the ChatGPT filter
+let kuwaharaShader;   // The shader for the kuwahara filter
+let generalizedKuwaharaShader;   // The shader for the generalized kuwahara filter
 
 function getEffects() {
   return {
     'None': null,
-    '1 - Pixel Sort': applyPixelSort,
+    'Kuwahara Filter': applyKuwaharaFilter,
+    'Generalized Kuwahara Filter': applyGeneralizedKuwaharaFilter,
+    'Pixel Sort': applyPixelSort,
     'Test - Brighten Image': applyBrightenImage,
     'Test - Invert Shader': applyShaderTest,
     'Test - Greyscale Shader': applyGreyscaleShader,
@@ -22,6 +26,8 @@ function loadShaders() {
   invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
   greyscaleShader = loadShader('shaders/noop-vert.glsl', 'shaders/greyscale.glsl');
   pixelSortShader = loadShader('shaders/noop-vert.glsl', 'shaders/pixel-sort.glsl');
+  kuwaharaShader = loadShader('shaders/noop-vert-gles3.glsl', 'shaders/kuwahara.glsl');
+  generalizedKuwaharaShader = loadShader('shaders/noop-vert-gles3.glsl', 'shaders/kuwahara-generalized.glsl');
 }
 
 function preload() {
@@ -33,6 +39,7 @@ function loadAndDuplicateImage(path_or_data) {
   img = loadImage(path_or_data, function() {
     effectImg = createImage(img.width, img.height);
     effectImg.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+    applyKuwaharaFilter();
   });
 }
 
@@ -99,11 +106,13 @@ function applyShaders(shaders) {
   let currentImg = img; // Start with the original image
   let gfx;
   
+  gfx = createGraphics(currentImg.width, currentImg.height, WEBGL);
   for (let shader of shaders) {
     // max texture size is 8192 - we should check for this
-    gfx = createGraphics(currentImg.width, currentImg.height, WEBGL);
     gfx.shader(shader);
     shader.setUniform('tex0', currentImg);
+    let texelSize = [1.0 / currentImg.width, 1.0 / currentImg.height, currentImg.width, currentImg.height];
+    shader.setUniform('uTexelSize', texelSize);
     gfx.rect(0, 0, currentImg.width, currentImg.height);
     
     // Capture the output into a p5.Image
@@ -132,6 +141,14 @@ function applyGreyscaleShader() {
 
 function applyPixelSort() {
   applyShaders([pixelSortShader]);
+}
+
+function applyKuwaharaFilter() {
+  applyShaders([kuwaharaShader, kuwaharaShader]);
+}
+
+function applyGeneralizedKuwaharaFilter() {
+  applyShaders([generalizedKuwaharaShader]);
 }
 
 function applyEffect() {
