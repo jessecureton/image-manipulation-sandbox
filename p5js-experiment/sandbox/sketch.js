@@ -124,6 +124,10 @@ function applyShaders(shaders) {
   // This really shouldn't be necessary but without it a second call to apply
   // a given shader will fail to execute the shader, and the console will print:
   //    WebGL warning: drawElementsInstanced: The current program is not linked.
+  // ChatGPT and I are both confused by why this is required, but it's something
+  // related to the creation of the graphics context. After calling
+  // `gfx.Shader(shader)` for a given context/shader pair, reusing the same shader
+  // on a different context will get this error.
   loadShaders();
 }
 
@@ -144,7 +148,7 @@ function applyPixelSort() {
 }
 
 function applyKuwaharaFilter() {
-  applyShaders([kuwaharaShader, kuwaharaShader]);
+  applyShaders([kuwaharaShader]);
 }
 
 function applyGeneralizedKuwaharaFilter() {

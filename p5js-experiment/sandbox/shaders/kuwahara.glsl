@@ -28,13 +28,12 @@ vec4 saturate(vec4 x) {
 }
 
 // Returns avg color in .rgb, std in .a for a rect of size (x1, y1) to (x2, y2)
-vec4 sampleQuadrant(vec2 uv, const int x1, const int x2, const int y1, const int y2, float numSamples) {
-  // TODO: numSamples appears to only be used for variance calculation,
-  // so we could probably just use the actual count of iterations instead of passing it in
+vec4 sampleQuadrant(vec2 uv, const int x1, const int x2, const int y1, const int y2) {
   float luminance_sum = 0.0;
   float luminance_sum2 = 0.0;
   vec3 color_sum = vec3(0.0);
 
+  float _numSamples = 0.0;
   for (int x = x1; x <= x2; ++x) {
     for (int y = y1; y <= y2; ++y) {
       vec3 _sample = texture(tex0, uv + (vec2(x, y) * uTexelSize.xy)).rgb;
@@ -45,31 +44,26 @@ vec4 sampleQuadrant(vec2 uv, const int x1, const int x2, const int y1, const int
       // afaict this would only be necessary if the input texture was not normalized or was HDR
       //color_sum += clamp(_sample, 0.0, 1.0);
       color_sum += _sample;
+      _numSamples++;
     }
   }
 
-  float mean = luminance_sum / numSamples;
-  float variance = abs(luminance_sum2 / numSamples - mean * mean);
+  float mean = luminance_sum / _numSamples;
+  float variance = abs(luminance_sum2 / _numSamples - mean * mean);
 
-  //return vec4(mean, mean, mean, 1.0);
-
-  return vec4(color_sum/numSamples, variance);
+  return vec4(color_sum/_numSamples, variance);
 }
 
 void main() {
   vec2 uv = vTexCoord;
 
-  float windowSize = 2.0 * float(kernelSize) + 1.0;
-  int quadrantSize = int(ceil(windowSize / 2.0));
-  int numSamples = quadrantSize * quadrantSize;
-
   fragColor = vec4(0.0);
   fragColor.a = 1.0;
 
-  vec4 q1 = sampleQuadrant(uv, -kernelSize, 0, -kernelSize, 0, float(numSamples));
-  vec4 q2 = sampleQuadrant(uv, 0, kernelSize, -kernelSize, 0, float(numSamples));
-  vec4 q3 = sampleQuadrant(uv, 0, kernelSize, 0, kernelSize, float(numSamples));
-  vec4 q4 = sampleQuadrant(uv, -kernelSize, 0, 0, kernelSize, float(numSamples));
+  vec4 q1 = sampleQuadrant(uv, -kernelSize, 0, -kernelSize, 0);
+  vec4 q2 = sampleQuadrant(uv, 0, kernelSize, -kernelSize, 0);
+  vec4 q3 = sampleQuadrant(uv, 0, kernelSize, 0, kernelSize);
+  vec4 q4 = sampleQuadrant(uv, -kernelSize, 0, 0, kernelSize);
 
   float minstd = min(q1.a, min(q2.a, min(q3.a, q4.a)));
   bvec4 q = equal(vec4(q1.a, q2.a, q3.a, q4.a), vec4(minstd));
