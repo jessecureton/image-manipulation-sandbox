@@ -23,11 +23,11 @@ function getEffects() {
 }
 
 function loadShaders() {
-  invertShader = loadShader('shaders/noop-vert.glsl', 'shaders/invert.glsl');
-  greyscaleShader = loadShader('shaders/noop-vert.glsl', 'shaders/greyscale.glsl');
-  pixelSortShader = loadShader('shaders/noop-vert.glsl', 'shaders/pixel-sort.glsl');
-  kuwaharaShader = loadShader('shaders/noop-vert-gles3.glsl', 'shaders/kuwahara.glsl');
-  generalizedKuwaharaShader = loadShader('shaders/noop-vert-gles3.glsl', 'shaders/kuwahara-generalized.glsl');
+  invertShader = loadShader('../shaders/noop-vert.glsl', '../shaders/invert.glsl');
+  greyscaleShader = loadShader('../shaders/noop-vert.glsl', '../shaders/greyscale.glsl');
+  pixelSortShader = loadShader('../shaders/noop-vert.glsl', '../shaders/pixel-sort.glsl');
+  kuwaharaShader = loadShader('../shaders/noop-vert-gles3.glsl', '../shaders/kuwahara.glsl');
+  generalizedKuwaharaShader = loadShader('../shaders/noop-vert-gles3.glsl', '../shaders/kuwahara-generalized.glsl');
 }
 
 function preload() {
@@ -39,7 +39,7 @@ function loadAndDuplicateImage(path_or_data) {
   img = loadImage(path_or_data, function() {
     effectImg = createImage(img.width, img.height);
     effectImg.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
-    applyKuwaharaFilter();
+    //applyGeneralizedKuwaharaFilter();
   });
 }
 
