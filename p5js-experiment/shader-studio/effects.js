@@ -16,6 +16,10 @@ class Effect {
 //
 // It also allows the effect to override the default values of the uniforms set
 // in the shader.
+// TODO: Do we really need this? This is really just a way to set a uniform by name/val
+// without requiring the Uniform class constructor, I think? Unclear how we update the
+// underlying shader's uniform from the UI in the case here where we only setValue at
+// construction time.
 class ShaderWithUniforms {
   constructor(shader, uniformValues) {
     this.shader = shader;
@@ -33,7 +37,7 @@ class ShaderWithUniforms {
 
 // Effects is a map of effect names to Effect objects, and is the source of
 // truth for the list of effects that can be applied to an image.
-const Effects = [
+var Effects = [
   new Effect('None', []),
   new Effect('Kuwahara',
     [
@@ -42,9 +46,14 @@ const Effects = [
   ),
 ].reduce((acc, effect) => {acc[effect.name] = effect; return acc;}, {});
 
-// TODO: we don't actually need to call a method here, the draw method can just
-// get the current effect from the selector and apply it?
+// Mark an effect as active
 function applyEffect() {
   let effect = Effects[ActiveEffectSelector.value()];
   console.log("Applying effect: " + effect.name);
+  state.activeEffect = effect;
+}
+
+// Render the current effect to the screen
+function renderEffect() {
+
 }

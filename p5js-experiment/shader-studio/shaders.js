@@ -11,7 +11,7 @@ class Uniform {
     this.max = max;
     this.value = defaultValue;
 
-    validTypes = ['int']; //, 'float', 'vec2', 'vec3', 'vec4'];
+    const validTypes = ['int']; //, 'float', 'vec2', 'vec3', 'vec4'];
     if (!validTypes.includes(type)) {
       throw new Error(`Invalid uniform type ${type}`);
     }
@@ -40,7 +40,7 @@ class Shader {
   }
 }
 
-const Shaders = [
+var Shaders = [
   new Shader('Kuwahara', 'kuwahara.glsl',
     [
       new Uniform('uKernelSize', 'int', 10, 1, 20),
